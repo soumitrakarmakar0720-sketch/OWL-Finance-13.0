@@ -1,0 +1,13 @@
+{% extends 'base.html' %}{% block content %}
+<div class="eyebrow">ADMIN / LOAN MANAGEMENT</div><h1>Loans</h1><p class="muted">Select a category to see loans. Open a loan to manage payments or foreclosure.</p>
+<div class="option-grid">
+{% for v,label,desc in [('active','Active loans','Currently running'),('offered','Offers','Awaiting acceptance'),('accepted','Accepted','Awaiting disbursement'),('closed','Closed','Fully repaid'),('foreclosed','Foreclosed','Early settlement'),('cancelled','Cancelled / archived','Archived records'),('deleted','Deleted loans','Restore or audit'),('all','All loans','Complete history')] %}
+<a class="option-card {% if status==v %}selected{% endif %}" href="{{url_for('admin_loans',status=v)}}"><span class="option-dot"></span><strong>{{label}}</strong><small>{{desc}}</small></a>
+{% endfor %}</div>
+<div class="section-head"><h2>{{status|replace('_',' ')|title}} loans <span class="count">{{loans|length}}</span></h2>{% if me.role=='admin' %}<a class="btn primary" href="{{url_for('admin_new_loan')}}">+ Create loan</a>{% endif %}</div>
+{% for l in loans %}
+<div class="loan-row"><a class="loan-main" href="{{url_for('loan_detail',lid=l.id)}}"><span class="loan-icon">₹</span><span><strong>Loan #{{l.id}} · {{l.application.user.name}}</strong><small>₹{{'%.2f'|format(l.principal)}} · {{l.rate}}% {{l.annual_or_monthly}}</small></span></a><div class="loan-actions"><span class="pill">{{l.status|replace('demo_','')|replace('_',' ')|title}}</span><a class="btn ghost" href="{{url_for('loan_detail',lid=l.id)}}">View</a>
+{% if me.role=='admin' %}{% if l.status=='deleted' %}<form method="post" action="{{url_for('admin_restore_loan',lid=l.id)}}"><input type="hidden" name="csrf" value="{{csrf}}"><button class="btn ghost">Restore</button></form>{% else %}<details class="danger-menu"><summary class="btn danger-outline">Delete loan</summary><div class="danger-content"><p><strong>Remove loan #{{l.id}} from operational lists?</strong></p><p>Financial history and audit records will be retained for reconciliation. This is not permanent erasure.</p><form method="post" action="{{url_for('admin_delete_loan',lid=l.id)}}"><input type="hidden" name="csrf" value="{{csrf}}"><label>Reason (10+ characters)<input name="reason" minlength="10" maxlength="500" required></label><label>Type DELETE {{l.id}} to confirm<input name="confirm" required autocomplete="off"></label><button class="btn danger">Confirm deletion</button></form></div></details>{% endif %}{% endif %}
+</div></div>
+{% else %}<div class="empty-state">No loans in this category. <a href="{{url_for('admin_loans',status='all')}}">View all loans</a></div>{% endfor %}
+{% endblock %}
